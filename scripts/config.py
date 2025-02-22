@@ -2,11 +2,11 @@ import json
 import os
 from time import sleep
 from scripts.logging import get_ytdlp_logger
-from scripts.paths import get_ytdlp_path, get_ffmpeg_path, get_ffprobe_path
+from scripts.paths import get_ytdlp_path, get_ffmpeg_path, get_ffprobe_path, get_cache_dir
 from scripts.constants import RED, GREEN, BLUE, RESET
 
 # Get the absolute path to the cache directory
-CACHE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.cache'))
+CACHE_DIR = get_cache_dir()
 
 # Safely create cache directory and subdirectories
 if os.path.exists(CACHE_DIR) and not os.path.isdir(CACHE_DIR):

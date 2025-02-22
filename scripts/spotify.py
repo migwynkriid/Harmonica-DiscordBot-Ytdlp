@@ -29,10 +29,10 @@ async def get_spotify_track_details(spotify_url):
             track_info = sp.track(track_id)
             artist_name = track_info['artists'][0]['name']
             track_name = track_info['name']
-            return f"{artist_name} - {track_name}"
+            return f"{artist_name} - {track_name}", track_id
     except Exception as e:
         print(f"Error retrieving Spotify track details: {str(e)}")
-        return None
+        return None, None
 
 async def get_spotify_album_details(spotify_url):
     try:

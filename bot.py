@@ -51,6 +51,7 @@ from scripts.load_scripts import load_scripts
 from scripts.activity import update_activity
 from scripts.spotify import get_spotify_album_details, get_spotify_track_details, get_spotify_playlist_details
 from scripts.priority import set_high_priority
+from scripts.paths import get_downloads_dir, get_root_dir, get_absolute_path
 
 # Load environment variables
 load_dotenv()
@@ -71,7 +72,8 @@ setup_logging(LOG_LEVEL)
 YTDLP_PATH = get_ytdlp_path()
 FFMPEG_PATH = get_ffmpeg_path()
 
-DOWNLOADS_DIR = Path(__file__).parent / 'downloads'
+ROOT_DIR = Path(get_root_dir())
+DOWNLOADS_DIR = ROOT_DIR / get_downloads_dir()
 OWNER_ID = OWNER_ID
 
 if not DOWNLOADS_DIR.exists():
@@ -163,6 +165,8 @@ async def on_ready():
     update_msg = f"{GREEN}Auto update: {BLUE if auto_update else RED}{'Enabled' if auto_update else disabled_msg}{RESET}"
     print(update_msg)
     print(f"{GREEN}SponsorBlock:{RESET} {BLUE if config.get('SPONSORBLOCK', False) else RED}{'Enabled' if config.get('SPONSORBLOCK', False) else 'Disabled'}{RESET}")
+    print(f"{GREEN}Clear downloads:{RESET} {BLUE if config.get('AUTO_CLEAR_DOWNLOADS', False) else RED}{'Enabled' if config.get('AUTO_CLEAR_DOWNLOADS', False) else 'Disabled'}{RESET} - {RED if config.get('AUTO_CLEAR_DOWNLOADS', False) else GREEN}Caching is {'disabled' if config.get('AUTO_CLEAR_DOWNLOADS', False) else 'enabled'}{RESET}")
+
     # Load scripts and commands
     load_scripts()
     await load_commands(bot)

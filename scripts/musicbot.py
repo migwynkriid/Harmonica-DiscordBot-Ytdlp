@@ -48,6 +48,7 @@ from scripts.voice import join_voice_channel, leave_voice_channel, handle_voice_
 from scripts.ytdlp import get_ytdlp_path, ytdlp_version
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.cache_handler import CacheFileHandler
+from scripts.caching import playlist_cache
 
 config_vars = load_config()
 INACTIVITY_TIMEOUT = config_vars.get('INACTIVITY_TIMEOUT', 60)
@@ -382,7 +383,34 @@ class MusicBot(PlaylistHandler, AfterPlayingHandler, SpotifyHandler):
                         ctx=ctx
                     ))
                 return None
+
         try:
+            # Check cache first for YouTube videos
+            if 'youtube.com/watch' in query or 'youtu.be/' in query:
+                video_id = None
+                if 'youtube.com/watch' in query:
+                    video_id = query.split('watch?v=')[1].split('&')[0]
+                elif 'youtu.be/' in query:
+                    video_id = query.split('youtu.be/')[1].split('?')[0]
+                
+                if video_id:
+                    cached_info = playlist_cache.get_cached_info(video_id)
+                    if cached_info and os.path.exists(cached_info['file_path']):
+                        print(f"{GREEN}Found cached YouTube file: {video_id} - {cached_info.get('title', 'Unknown')}{RESET}")
+                        if status_msg:
+                            await status_msg.delete()
+                        return {
+                            'title': cached_info.get('title', 'Unknown'),  # Use cached title
+                            'url': query,
+                            'file_path': cached_info['file_path'],
+                            'thumbnail': cached_info.get('thumbnail'),
+                            'is_stream': False,
+                            'is_from_playlist': is_playlist_url(query),
+                            'ctx': status_msg.channel if status_msg else None,
+                            'is_from_cache': True
+                        }
+
+            # If not in cache or not a YouTube video, proceed with normal download
             self._last_progress = -1
             if not skip_url_check:
                 if is_playlist_url(query):
@@ -733,6 +761,18 @@ class MusicBot(PlaylistHandler, AfterPlayingHandler, SpotifyHandler):
                     duration = get_audio_duration(file_path)
                     if duration > 0:
                         self.duration_cache[file_path] = duration
+
+                    # Add to cache for both YouTube direct links and Spotify->YouTube conversions
+                    if os.path.exists(file_path) and info.get('id'):
+                        video_id = info['id']
+                        if not playlist_cache.is_video_cached(video_id):
+                            playlist_cache.add_to_cache(
+                                video_id, 
+                                file_path,
+                                thumbnail_url=info.get('thumbnail'),
+                                title=info.get('title', 'Unknown')  # Save the title
+                            )
+                            print(f"{GREEN}Added Youtube file to cache: {video_id} - {info.get('title', 'Unknown')}{RESET}")
 
                     return {
                         'title': info['title'],

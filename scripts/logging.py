@@ -101,8 +101,26 @@ def setup_logging(log_level):
     console_handler = logging.StreamHandler(sys.stdout)
 
     # Create formatter
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s', 
-                                datefmt='%Y-%m-%d %H:%M:%S')
+    class ColoredFormatter(logging.Formatter):
+        def format(self, record):
+            if record.name == 'yt-dlp':
+                record.name = f"{RED}yt-dlp{RESET}"
+            if record.levelname == 'DEBUG':
+                record.levelname = f"{GREEN}{record.levelname}{RESET}"
+            if '[youtube]' in record.getMessage():
+                record.msg = record.msg.replace('[youtube]', f'{RED}[youtube]{RESET}')
+            if '[youtube:search]' in record.getMessage():
+                record.msg = record.msg.replace('[youtube:search]', f'{BLUE}[youtube:search]{RESET}')
+            if '[info]' in record.getMessage():
+                record.msg = record.msg.replace('[info]', f'{BLUE}[info]{RESET}')
+            if '[download]' in record.getMessage():
+                record.msg = record.msg.replace('[download]', f'{BLUE}[download]{RESET}')
+            if '[debug]' in record.getMessage():
+                record.msg = record.msg.replace('[debug]', f'{BLUE}[debug]{RESET}')
+            return super().format(record)
+
+    formatter = ColoredFormatter('%(asctime)s %(levelname)s %(name)s %(message)s', 
+                               datefmt='[%H:%M:%S]')
     
     # Add formatter to handlers
     file_handler.setFormatter(formatter)
